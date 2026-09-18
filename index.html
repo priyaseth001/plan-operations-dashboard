@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Operations Performance Dashboard</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --success: #059669;
+            --success-soft: #ecfdf5;
+            --warning: #d97706;
+            --warning-soft: #fffbeb;
+            --danger: #dc2626;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 24px;
+        }
+
+        .dashboard-container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 24px 32px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .title-area h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .title-area p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: var(--success-soft); color: var(--success); }
+        .badge-warning { background: var(--warning-soft); color: var(--warning); }
+        .badge-accent { background: var(--accent-soft); color: var(--accent); }
+
+        .subtext {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .highlight-box h3 {
+            font-size: 16px;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+
+        .highlight-box p {
+            font-size: 14px;
+            color: #1e3a8a;
+            line-height: 1.6;
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr.highlight-row {
+            background-color: #f0fdf4;
+            font-weight: 600;
+        }
+
+        @media print {
+            body { padding: 0; background: #fff; }
+            .btn { display: none; }
+            .card, .table-container, .highlight-box { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <header>
+        <div class="title-area">
+            <h1>Plan Operations Performance Dashboard</h1>
+            <p>FY27 YTD Performance, Quality Drivers & Case Resolution</p>
+        </div>
+        <button class="btn" onclick="window.print()">Print / Export PDF</button>
+    </header>
+
+    <!-- HIGHLIGHT CALLOUT FOR NEW PLATFORM & AUTOMATION -->
+    <div class="highlight-box">
+        <h3>🚀 Key Operational Victories & Quality Drivers</h3>
+        <p>
+            <strong>Replan Rate Drop:</strong> Replan Rate reached a record low of <strong>7.8%</strong> (down <strong>-26.6% YoY</strong> from 10.7%, peak 11.0% in FY25), driven by major reductions in Quota-related plan reissues.<br>
+            <strong>Compensation Station Adoption:</strong> Platform registered <strong>380K Total Click-Throughs</strong> across <strong>~42K Unique Users</strong> for plan hosting and delivery.<br>
+            <strong>LOA Return Turnaround:</strong> Cycle time slashed to <strong>11.1 days</strong> (a <strong>55.6% YoY improvement</strong>) due to FY27 LOA automation decoupling quota submission dependencies.
+        </p>
+    </div>
+
+    <!-- METRICS GRID -->
+    <div class="grid">
+        <!-- Replan Rate KPI -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Replan Rate</span>
+                    <span class="badge badge-success">▼ -26.6%</span>
+                </div>
+                <div class="metric-value">7.8%</div>
+            </div>
+            <div class="subtext">Down from 10.7% YoY (Peak 11.0% FY25)</div>
+        </div>
+
+        <!-- Plans Processed -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Plans Processed</span>
+                    <span class="badge badge-success">▼ -2.9%</span>
+                </div>
+                <div class="metric-value">70.9K</div>
+            </div>
+            <div class="subtext">Down from 73.7K in Prev Year</div>
+        </div>
+
+        <!-- Plans Per Payee -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Plans Per Payee</span>
+                    <span class="badge badge-success">▼ -15.0%</span>
+                </div>
+                <div class="metric-value">1.7</div>
+            </div>
+            <div class="subtext">Down from 2.0 in Prev Year</div>
+        </div>
+
+        <!-- Commissionable HC -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Commissionable HC</span>
+                    <span class="badge badge-success">▲ +12.2%</span>
+                </div>
+                <div class="metric-value">41,162</div>
+            </div>
+            <div class="subtext">Cumulative Payees (36,692 Prev Year)</div>
+        </div>
+
+        <!-- Avg Days to Issue Overall -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Avg Days to Issue (Overall)</span>
+                    <span class="badge badge-warning">▲ +56.8%</span>
+                </div>
+                <div class="metric-value">34.8 Days</div>
+            </div>
+            <div class="subtext">SP Creation to Issuance (22.2d Prev Year)</div>
+        </div>
+
+        <!-- Quota to Issuance Segment -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Quota to Issuance Segment</span>
+                    <span class="badge badge-warning">▲ +42.3%</span>
+                </div>
+                <div class="metric-value">18.5 Days</div>
+            </div>
+            <div class="subtext">FY27 YTD (Up from 13.0d in FY26)</div>
+        </div>
+
+        <!-- PlanOps Cases Opened -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">PlanOps Cases Opened</span>
+                    <span class="badge badge-warning">▲ +21.1%</span>
+                </div>
+                <div class="metric-value">1,780</div>
+            </div>
+            <div class="subtext">Up from 1,479 in Prev Year</div>
+        </div>
+
+        <!-- Case Resolution Time -->
+        <div class="card">
+            <div>
+                <div class="card-header">
+                    <span class="card-title">Case Resolution Time</span>
+                    <span class="badge badge-accent">14d Avg</span>
+                </div>
+                <div class="metric-value">14 Days</div>
+            </div>
+            <div class="subtext">3,237 Total Cases Tracked</div>
+        </div>
+    </div>
+
+    <!-- TABLES GRID -->
+    <div class="tables-grid">
+        <!-- CASE RESOLUTION BY QUARTER TABLE -->
+        <div class="table-container">
+            <div class="table-header">PlanOps Case Resolution Trend by Quarter</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quarter Open</th>
+                        <th>Cases Count</th>
+                        <th>Avg Resolution Age</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>2025 Q1</strong></td>
+                        <td>440</td>
+                        <td>11 Days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2025 Q2</strong></td>
+                        <td>1,011</td>
+                        <td>13 Days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2026 Q1</strong></td>
+                        <td>552</td>
+                        <td>14 Days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2026 Q2</strong></td>
+                        <td>1,234</td>
+                        <td>15 Days</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td><strong>Grand Total / Overall</strong></td>
+                        <td><strong>3,237</strong></td>
+                        <td><strong>14 Days</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- REPLAN REASONS BREAKDOWN TABLE -->
+        <div class="table-container">
+            <div class="table-header">Replan Reasons Driver Trend (Major Drop Source)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Replan Reason</th>
+                        <th>FY25 Peak</th>
+                        <th>FY26</th>
+                        <th>FY27 YTD</th>
+                        <th>Trend & Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight-row">
+                        <td><strong>Quota Changes</strong></td>
+                        <td>3.0K</td>
+                        <td>2.3K</td>
+                        <td>2.4K</td>
+                        <td><strong>Major Drop (-20% from peak)</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Design Changes</strong></td>
+                        <td>0.0K</td>
+                        <td>0.8K</td>
+                        <td>0.2K</td>
+                        <td>Reduced rework (-75%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Workday Issues</strong></td>
+                        <td>0.9K</td>
+                        <td>0.3K</td>
+                        <td>0.5K</td>
+                        <td>Stabilized lower volume</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SP System Issues</strong></td>
+                        <td>0.2K</td>
+                        <td>0.3K</td>
+                        <td>0.3K</td>
+                        <td>Consistently low impact</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- LIFE EVENTS BREAKDOWN TABLE -->
+    <div class="table-container">
+        <div class="table-header">Days to Issue Trend by Life Event (From SP Creation to Issuance)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Life Event</th>
+                    <th>FY27 Volume</th>
+                    <th>SP Creation to Completion</th>
+                    <th>Completion to Quota Sub.</th>
+                    <th>Quota to Issuance</th>
+                    <th>Total Days to Issue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>G4G</strong></td>
+                    <td>39,856</td>
+                    <td>4.1 days</td>
+                    <td>22.5 days</td>
+                    <td>18.3 days</td>
+                    <td><strong>44.9 days</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Merit Change</strong></td>
+                    <td>23,881</td>
+                    <td>0.4 days</td>
+                    <td>0.0 days</td>
+                    <td>19.6 days</td>
+                    <td><strong>20.0 days</strong></td>
+                </tr>
+                <tr class="highlight-row">
+                    <td><strong>LOA Return ★</strong></td>
+                    <td>1,321</td>
+                    <td>11.1 days</td>
+                    <td>0.0 days</td>
+                    <td>0.0 days</td>
+                    <td><strong>11.1 days</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>New Hire/Rehire</strong></td>
+                    <td>2,666</td>
+                    <td>7.0 days</td>
+                    <td>13.8 days</td>
+                    <td>16.2 days</td>
+                    <td><strong>37.0 days</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Territory Change</strong></td>
+                    <td>926</td>
+                    <td>1.7 days</td>
+                    <td>9.2 days</td>
+                    <td>16.0 days</td>
+                    <td><strong>26.9 days</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Transfer/Promotion</strong></td>
+                    <td>2,297</td>
+                    <td>4.0 days</td>
+                    <td>16.8 days</td>
+                    <td>17.5 days</td>
+                    <td><strong>38.3 days</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
